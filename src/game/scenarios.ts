@@ -288,6 +288,127 @@ export const SCENARIOS: Scenario[] = [
     },
   },
   {
+    id: 'el_nino_basin',
+    name: 'El Niño Basin Crisis',
+    difficulty: 'Expert',
+    tagline: 'Survive an unprecedented El Niño crisis: -80% hydro collapse, +45% heat load, and austere ₱175k reserves.',
+    description: 'A catastrophic Pacific El Niño super-anomaly has engulfed the river basin in extreme 42°C heat and unprecedented drought. With hydroelectric output crippled by reservoir depletion (-80%) and residential cooling demand surging (+45%), you must decommission 5 emergency fossil units (2 heavy coal + 3 gas peakers), drill 3 deep geothermal baseload plants, deploy 1,000+ MWh of battery storage, and reach 98% clean energy on an austere ₱175,000 municipal budget.',
+    startingFunds: 175000,
+    gridSize: { width: 8, depth: 8 },
+    initialCo2Target: 2200,
+    targetCleanPct: 98,
+    deadlineDays: 180,
+    initialAlert: 'el_nino',
+    defaultEngineId: 'polluter_pays',
+    defaultDemandProfileId: 'tropical_heat_ramp',
+    objectives: [
+      {
+        id: 'en_decom_fossil',
+        title: 'Decommission 5 Emergency Fossil Units',
+        description: 'Phase out 5 emergency gas peakers and coal units deployed during initial drought panic.',
+        type: 'decommission_all_fossil',
+        target: 5,
+        unit: 'plants',
+      },
+      {
+        id: 'en_geothermal',
+        title: 'Drill 3 Deep Geothermal Baseload Plants',
+        description: 'Tapping volcanic subterranean heat provides 24/7 firm power immune to watershed evaporation.',
+        type: 'deploy_building',
+        target: 3,
+        targetBuilding: 'geothermal',
+        unit: 'plants',
+      },
+      {
+        id: 'en_storage',
+        title: 'Install 1,000+ MWh Battery Storage',
+        description: 'Deploy Megapack BESS units to bank midday solar and withstand intense evening cooling surges.',
+        type: 'storage_capacity_mwh',
+        target: 1000,
+        unit: 'MWh',
+      },
+      {
+        id: 'en_clean_capacity',
+        title: 'Deploy 850+ MW Clean Generation',
+        description: 'Overcome severe hydro deratings by building a massive renewable and geothermal backbone.',
+        type: 'clean_capacity_mw',
+        target: 850,
+        unit: 'MW',
+      },
+      {
+        id: 'en_clean_pct',
+        title: 'Achieve 98%+ Clean Power',
+        description: 'Supply 98%+ clean electricity to the sweltering basin without triggering a rolling blackout.',
+        type: 'clean_percentage',
+        target: 98,
+        unit: '%',
+      },
+      {
+        id: 'en_tech',
+        title: 'Unlock 4 Grid Resilience Technologies',
+        description: 'Research advanced battery chemistries and smart grid dispatch in Technology Upgrades.',
+        type: 'tech_researched',
+        target: 4,
+        unit: 'upgrades',
+      },
+    ],
+    initialTiles: (x: number, z: number) => {
+      let terrain: TerrainType = 'plains';
+      let building: BuildingType = 'empty';
+
+      // Ocean / coastal shelf (West edge) for offshore wind
+      if (x === 0) {
+        terrain = 'water';
+      } else if (x === 1 && (z <= 2 || z >= 5)) {
+        terrain = 'coastal';
+      }
+      // Northern mountain ridge for Deep Geothermal
+      else if (z === 0 && x >= 2) {
+        terrain = 'mountains';
+      } else if (z === 1 && (x === 3 || x === 4 || x === 6 || x === 7)) {
+        terrain = 'mountains';
+      }
+      // River channel running through the basin (depleted hydro)
+      else if ((x === 5 && z === 1) || (x === 5 && z === 2) || (x === 4 && z === 2) || (x === 3 && z === 3) || (x === 2 && z === 3) || (x === 2 && z === 4)) {
+        terrain = 'river';
+        if (x === 5 && z === 1) building = 'hydro_dam';
+      }
+      // Tectonic hills for wind and geothermal
+      else if ((x === 6 && z === 2) || (x === 6 && z === 3) || (x === 7 && z === 3)) {
+        terrain = 'hills';
+      }
+      // Sweltering Basin City
+      else if ((x === 3 && z === 4) || (x === 4 && z === 4)) {
+        terrain = 'city';
+        building = 'city_center';
+      }
+      // Emergency fossil plants to decommission (2 coal plants + 3 gas peakers = 5 units)
+      else if (x === 4 && z === 3) {
+        terrain = 'plains';
+        building = 'coal_plant';
+      } else if (x === 5 && z === 5) {
+        terrain = 'plains';
+        building = 'coal_plant';
+      } else if (x === 2 && z === 5) {
+        terrain = 'plains';
+        building = 'gas_peaker';
+      } else if (x === 3 && z === 2) {
+        terrain = 'plains';
+        building = 'gas_peaker';
+      } else if (x === 1 && z === 3) {
+        terrain = 'hills';
+        building = 'gas_peaker';
+      }
+      // Existing Substation
+      else if (x === 3 && z === 5) {
+        terrain = 'plains';
+        building = 'substation';
+      }
+
+      return { terrain, building };
+    },
+  },
+  {
     id: 'sandbox',
     name: 'Clean Energy Sandbox',
     difficulty: 'Sandbox',

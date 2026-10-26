@@ -1,4 +1,4 @@
-import { GridTile, WeatherState, TechUpgrade, GameEvent, EconomicEngine, PeakDemandProfile, ClimateAlert } from './types';
+import { GridTile, WeatherState, TechUpgrade, GameEvent, EconomicEngine, PeakDemandProfile, ClimateAlert, ClimateAlertType } from './types';
 import { BUILDING_DEFS } from './buildingDefs';
 import { ECONOMIC_ENGINES } from './economicEngines';
 import { DEMAND_PROFILES } from './demandProfiles';
@@ -28,20 +28,21 @@ export interface SimulationResult {
   newEvents: GameEvent[];
 }
 
-export function createInitialWeather(): WeatherState {
+export function createInitialWeather(initialAlertType?: ClimateAlertType): WeatherState {
+  const activeAlert = initialAlertType ? createClimateAlert(initialAlertType, false) : null;
   return {
     timeOfDay: 9.0, // 9:00 AM
     day: 1,
     year: 2026,
     windSpeedMs: 8.5,
     solarIrradiancePct: 80,
-    temperatureC: 22,
-    cloudCoverPct: 20,
-    isHeatwave: false,
+    temperatureC: activeAlert?.type === 'el_nino' ? 36 : 22,
+    cloudCoverPct: activeAlert?.type === 'el_nino' ? 5 : 20,
+    isHeatwave: activeAlert?.type === 'el_nino',
     isDunkelflaute: false,
-    activeAlert: null,
-    // Initialize a randomized upcoming climate hazard advisory
-    upcomingAlert: createClimateAlert(getRandomClimateAlertType(), true),
+    activeAlert,
+    // Initialize a randomized upcoming climate hazard advisory if no dedicated initial alert
+    upcomingAlert: initialAlertType ? null : createClimateAlert(getRandomClimateAlertType(), true),
   };
 }
 
@@ -106,6 +107,7 @@ export function updateWeather(current: WeatherState, deltaHours: number): Weathe
   if (activeAlert?.type === 'dunkelflaute') cloudCycle = Math.max(cloudCycle, 92);
   if (activeAlert?.type === 'typhoon') cloudCycle = Math.max(cloudCycle, 88);
   if (activeAlert?.type === 'atmospheric_river') cloudCycle = Math.max(cloudCycle, 82);
+  if (activeAlert?.type === 'el_nino') cloudCycle = Math.min(cloudCycle, 12); // cloudless drought skies
   const clampedCloud = Math.max(5, Math.min(95, cloudCycle));
 
   // Actual solar irradiance after cloud absorption
@@ -127,6 +129,8 @@ export function updateWeather(current: WeatherState, deltaHours: number): Weathe
   let temperatureC = Math.round(18 + Math.sin(dayCyclePhase - Math.PI / 2) * 7 - (clampedCloud > 70 ? 2 : 0));
   if (activeAlert?.type === 'heatwave') {
     temperatureC = Math.max(38, temperatureC + 10);
+  } else if (activeAlert?.type === 'el_nino') {
+    temperatureC = Math.max(39, temperatureC + 11);
   } else if (activeAlert?.type === 'polar_vortex') {
     temperatureC = Math.min(-14, temperatureC - 26);
   }
@@ -139,7 +143,7 @@ export function updateWeather(current: WeatherState, deltaHours: number): Weathe
     solarIrradiancePct,
     temperatureC,
     cloudCoverPct: Math.round(clampedCloud),
-    isHeatwave: temperatureC > 31 || activeAlert?.type === 'heatwave',
+    isHeatwave: temperatureC > 31 || activeAlert?.type === 'heatwave' || activeAlert?.type === 'el_nino',
     isDunkelflaute: (clampedCloud > 80 && windSpeedMs < 3.5) || activeAlert?.type === 'dunkelflaute',
     activeAlert,
     upcomingAlert,

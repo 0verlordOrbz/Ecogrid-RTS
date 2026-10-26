@@ -47,6 +47,7 @@ export class SceneController {
   private highlightedCoords: { x: number; z: number } | null = null;
   private windTurbineRotators: Mesh[] = [];
   private currentWindSpeed: number = 8.5;
+  private hasInitializedCameraTarget: boolean = false;
 
   private onTileSelectedCallback?: (tileX: number, tileZ: number) => void;
   private onDeployBuildingCallback?: (tileX: number, tileZ: number) => void;
@@ -76,10 +77,8 @@ export class SceneController {
     this.scene = new Scene(this.engine);
     this.scene.clearColor = new Color4(0.08, 0.12, 0.18, 1.0);
 
-    // 3. Atmospheric Fog
-    this.scene.fogMode = Scene.FOGMODE_EXP2;
-    this.scene.fogDensity = 0.008;
-    this.scene.fogColor = new Color3(0.15, 0.18, 0.22);
+    // 3. Keep atmospheric fog disabled so grid tile colors remain stable and consistent
+    this.scene.fogMode = Scene.FOGMODE_NONE;
 
     // 4. ArcRotateCamera with responsive boundaries and multi-touch support
     const isNarrow = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -580,7 +579,8 @@ export class SceneController {
       }
     });
 
-    if (tiles.length > 0) {
+    if (!this.hasInitializedCameraTarget && tiles.length > 0) {
+      this.hasInitializedCameraTarget = true;
       const maxX = Math.max(...tiles.map((t) => t.x));
       const maxZ = Math.max(...tiles.map((t) => t.z));
       const spacing = 2.15;
@@ -588,7 +588,7 @@ export class SceneController {
     }
   }
 
-  public updateAtmosphere(weather: WeatherState, cleanPct: number) {
+  public updateAtmosphere(weather: WeatherState, _cleanPct?: number) {
     this.currentWindSpeed = weather.windSpeedMs;
 
     const hour = weather.timeOfDay;
@@ -603,53 +603,30 @@ export class SceneController {
       this.sunLight.direction = new Vector3(sunX, sunY, sunZ);
 
       if (hour < 7.5 || hour > 16.5) {
-        this.sunLight.diffuse = new Color3(1.0, 0.78, 0.5);
-        this.sunLight.intensity = 0.9;
+        this.sunLight.diffuse = new Color3(1.0, 0.88, 0.72);
+        this.sunLight.intensity = 0.95;
       } else {
         this.sunLight.diffuse = new Color3(1.0, 0.98, 0.92);
-        this.sunLight.intensity = 1.25;
+        this.sunLight.intensity = 1.15;
       }
       this.ambientLight.intensity = 0.55;
+      // Stable daytime sky backdrop: never alters tile colors on grid updates
+      this.scene.clearColor = new Color4(0.07, 0.11, 0.16, 1.0);
     } else {
       this.sunLight.direction = new Vector3(0.5, -2, 0.5);
-      this.sunLight.diffuse = new Color3(0.3, 0.45, 0.7);
-      this.sunLight.intensity = 0.35;
-      this.ambientLight.intensity = 0.3;
-    }
-
-    const cleanFrac = cleanPct / 100;
-    let targetSkyR = 0.1 + (1 - cleanFrac) * 0.18;
-    let targetSkyG = 0.16 + cleanFrac * 0.35;
-    let targetSkyB = 0.22 + cleanFrac * 0.55;
-
-    // Atmospheric adjustments for active climate alerts
-    if (weather.activeAlert?.type === 'typhoon') {
-      targetSkyR = 0.12;
-      targetSkyG = 0.14;
-      targetSkyB = 0.18;
+      this.sunLight.diffuse = new Color3(0.4, 0.5, 0.7);
       this.sunLight.intensity = 0.4;
+      this.ambientLight.intensity = 0.35;
+      // Stable nighttime sky backdrop
+      this.scene.clearColor = new Color4(0.03, 0.05, 0.08, 1.0);
+    }
+
+    // Weather-specific lighting adjustments (without altering base tile colors)
+    if (weather.activeAlert?.type === 'typhoon') {
+      this.sunLight.intensity = Math.min(this.sunLight.intensity, 0.5);
     } else if (weather.activeAlert?.type === 'wildfire_haze') {
-      targetSkyR = 0.32;
-      targetSkyG = 0.18;
-      targetSkyB = 0.12;
-      this.sunLight.intensity = 0.6;
-    } else if (weather.activeAlert?.type === 'heatwave') {
-      targetSkyR = 0.30;
-      targetSkyG = 0.22;
-      targetSkyB = 0.15;
+      this.sunLight.intensity = Math.min(this.sunLight.intensity, 0.7);
     }
-
-    if (!isDay) {
-      targetSkyR *= 0.25;
-      targetSkyG *= 0.25;
-      targetSkyB *= 0.35;
-    }
-
-    this.scene.clearColor = new Color4(targetSkyR, targetSkyG, targetSkyB, 1.0);
-    this.scene.fogColor = new Color3(targetSkyR * 1.1, targetSkyG * 1.1, targetSkyB * 1.1);
-
-    const smogFactor = Math.max(0, 1 - cleanFrac);
-    this.scene.fogDensity = 0.005 + smogFactor * 0.015;
   }
 
   private updateAnimations() {

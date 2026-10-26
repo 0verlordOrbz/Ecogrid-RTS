@@ -36,7 +36,7 @@ import { DEMAND_PROFILES, getRandomDemandProfile } from './game/demandProfiles';
 import { EconomicEngineModal } from './components/EconomicEngineModal';
 import { ClimateAlertModal } from './components/ClimateAlertModal';
 import { TitleWindowModal } from './components/TitleWindowModal';
-import { createClimateAlert, getRandomClimateAlert } from './game/climateAlerts';
+import { createClimateAlert, getRandomClimateAlert, CLIMATE_ALERT_TEMPLATES } from './game/climateAlerts';
 import { useDeviceType } from './game/useDeviceType';
 import {
   createInitialWeather,
@@ -121,7 +121,7 @@ export default function App() {
     setFunds(scenario.startingFunds);
     fundsRef.current = scenario.startingFunds;
     fundsFractionRef.current = 0;
-    setWeather(createInitialWeather());
+    setWeather(createInitialWeather(scenario.initialAlert));
     setHasWon(false);
     setHasFailed(false);
     hasFailedRef.current = false;
@@ -146,7 +146,7 @@ export default function App() {
     demandProfileRef.current = newProfile;
 
     setTiles(newTiles);
-    setEvents([
+    const initialEvents: GameEvent[] = [
       {
         id: `start_${Date.now()}`,
         title: `Mission: ${scenario.name}`,
@@ -155,7 +155,22 @@ export default function App() {
         timestamp: Date.now(),
         persistent: true,
       },
-    ]);
+    ];
+
+    if (scenario.initialAlert && CLIMATE_ALERT_TEMPLATES[scenario.initialAlert]) {
+      const template = CLIMATE_ALERT_TEMPLATES[scenario.initialAlert];
+      initialEvents.push({
+        id: `hazard_${Date.now()}`,
+        title: `🚨 Dedicated Climate Hazard: ${template.title}`,
+        description: `${template.description} Mitigation: ${template.mitigationAdvice}`,
+        type: 'critical',
+        timestamp: Date.now() + 10,
+        durationMs: 12000,
+        isClimateAlert: true,
+      });
+    }
+
+    setEvents(initialEvents);
   }, []);
 
   // Handle Scenario Objectives open/close; starts the clock on first close

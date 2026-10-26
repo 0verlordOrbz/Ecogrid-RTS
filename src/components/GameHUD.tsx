@@ -136,7 +136,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   const upcomingAlert = weather.upcomingAlert;
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-30 flex flex-col pointer-events-none select-none">
+    <header className="absolute top-0 left-0 right-0 z-40 flex flex-col pointer-events-none select-none">
       {/* 1. Primary Header Bar */}
       <div className="w-full bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2 sm:gap-4 pointer-events-auto">
         {/* Left: Brand & Mobile Menu Button */}
@@ -453,32 +453,40 @@ export const GameHUD: React.FC<GameHUDProps> = ({
               </button>
 
               {showScaleMenu && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-slate-950/98 border border-slate-700 rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-xs backdrop-blur-md">
-                  <div className="px-2 py-1 text-[10px] font-mono text-slate-400 uppercase tracking-wider border-b border-slate-800 flex items-center justify-between">
-                    <span>UI Scale</span>
-                    <span className="text-emerald-400 font-bold">{deviceInfo.deviceType}</span>
+                <>
+                  {/* Backdrop to dismiss scale menu on click outside */}
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowScaleMenu(false)}
+                    aria-hidden="true"
+                  />
+                  <div className="absolute right-0 top-full mt-2 w-52 bg-slate-950/98 border border-slate-700/90 rounded-xl shadow-2xl p-2 z-50 flex flex-col gap-1 text-xs backdrop-blur-md pointer-events-auto">
+                    <div className="px-2 py-1 text-[10px] font-mono text-slate-400 uppercase tracking-wider border-b border-slate-800 flex items-center justify-between">
+                      <span>UI Scale</span>
+                      <span className="text-emerald-400 font-bold">{deviceInfo.deviceType}</span>
+                    </div>
+                    {(['auto', 'compact', 'standard', 'comfortable'] as const).map((sc) => (
+                      <button
+                        key={sc}
+                        onClick={() => {
+                          sound.playClick();
+                          deviceInfo.setInterfaceScale(sc);
+                          setShowScaleMenu(false);
+                        }}
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-md text-left transition-colors cursor-pointer ${
+                          deviceInfo.interfaceScale === sc
+                            ? 'bg-emerald-500/20 text-emerald-300 font-bold'
+                            : 'hover:bg-slate-800 text-slate-300'
+                        }`}
+                      >
+                        <span className="capitalize">{sc === 'auto' ? 'Auto (Device)' : sc}</span>
+                        <span className="text-[10px] font-mono text-slate-400">
+                          {sc === 'compact' ? '85%' : sc === 'comfortable' ? '115%' : sc === 'standard' ? '100%' : `${deviceInfo.deviceType}`}
+                        </span>
+                      </button>
+                    ))}
                   </div>
-                  {(['auto', 'compact', 'standard', 'comfortable'] as const).map((sc) => (
-                    <button
-                      key={sc}
-                      onClick={() => {
-                        sound.playClick();
-                        deviceInfo.setInterfaceScale(sc);
-                        setShowScaleMenu(false);
-                      }}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-md text-left transition-colors cursor-pointer ${
-                        deviceInfo.interfaceScale === sc
-                          ? 'bg-emerald-500/20 text-emerald-300 font-bold'
-                          : 'hover:bg-slate-800 text-slate-300'
-                      }`}
-                    >
-                      <span className="capitalize">{sc === 'auto' ? 'Auto (Device)' : sc}</span>
-                      <span className="text-[10px] font-mono text-slate-400">
-                        {sc === 'compact' ? '85%' : sc === 'comfortable' ? '115%' : sc === 'standard' ? '100%' : `${deviceInfo.deviceType}`}
-                      </span>
-                    </button>
-                  ))}
-                </div>
+                </>
               )}
             </div>
           )}

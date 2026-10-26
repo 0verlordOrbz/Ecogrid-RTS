@@ -172,6 +172,7 @@ export interface Scenario {
   objectives: SpecificObjective[];
   defaultEngineId?: EconomicEngineId;
   defaultDemandProfileId?: PeakDemandProfileId;
+  initialAlert?: ClimateAlertType;
 }
 
 export interface GameEvent {
@@ -196,7 +197,8 @@ export type ClimateAlertType =
   | 'atmospheric_river'
   | 'geomagnetic_storm'
   | 'flash_drought'
-  | 'grid_frequency_instability';
+  | 'grid_frequency_instability'
+  | 'el_nino';
 
 export interface ClimateAlertEffects {
   solarMultiplier?: number;

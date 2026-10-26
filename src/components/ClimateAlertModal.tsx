@@ -79,6 +79,8 @@ export const ClimateAlertModal: React.FC<ClimateAlertModalProps> = ({
         return <SunMedium className={className} />;
       case 'grid_frequency_instability':
         return <Activity className={className} />;
+      case 'el_nino':
+        return <Sun className={className} />;
       default:
         return <AlertTriangle className={className} />;
     }

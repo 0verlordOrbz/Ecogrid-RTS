@@ -36,6 +36,8 @@ export function generateScenarioGrid(scenario: Scenario): GridTile[] {
     generateRustValley(draft, width, depth);
   } else if (scenarioId === 'dunkelflaute') {
     generateDunkelflaute(draft, width, depth);
+  } else if (scenarioId === 'el_nino_basin') {
+    generateElNino(draft, width, depth);
   } else {
     // Sandbox or custom
     generateSandbox(draft, width, depth);
@@ -334,6 +336,85 @@ function generateDunkelflaute(draft: TileDraft[][], width: number, depth: number
 
   // Objective: 2 to 3 gas peakers to decommission
   placeStructures(draft, width, depth, 'gas_peaker', 2, ['plains', 'hills']);
+}
+
+/**
+ * El Niño Basin Crisis Procedural Generator
+ * Objective: Survive catastrophic drought and heat; decommission 3 gas peakers; build geothermal, solar, and storage.
+ * Features: High mountain ridges for deep geothermal, depleted river gorge with an existing hydro dam,
+ * coastal shelf for offshore wind, sun-drenched plains for solar & BESS, and high-density urban core.
+ */
+function generateElNino(draft: TileDraft[][], width: number, depth: number) {
+  // 1. Coast / Ocean along west or south edge for offshore wind
+  const coastSide = Math.random() < 0.5 ? 'west' : 'south';
+  for (let x = 0; x < width; x++) {
+    for (let z = 0; z < depth; z++) {
+      if (coastSide === 'west') {
+        if (x === 0) draft[x][z].terrain = 'water';
+        else if (x === 1 && Math.random() < 0.6) draft[x][z].terrain = 'coastal';
+      } else {
+        if (z === depth - 1) draft[x][z].terrain = 'water';
+        else if (z === depth - 2 && Math.random() < 0.6) draft[x][z].terrain = 'coastal';
+      }
+    }
+  }
+
+  // 2. High Alpine Mountain Ridges (North / Northeast) for Geothermal Baseload
+  const mountainCount = 6 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < mountainCount; i++) {
+    const mx = Math.max(1, Math.min(width - 1, 3 + Math.floor(Math.random() * 5)));
+    const mz = Math.max(0, Math.min(2, Math.floor(Math.random() * 2)));
+    if (draft[mx][mz].terrain !== 'water') {
+      draft[mx][mz].terrain = 'mountains';
+    }
+  }
+
+  // 3. Drought-depleted river basin channel
+  let rx = Math.floor(width / 2);
+  let rz = 1;
+  const riverLength = 5 + Math.floor(Math.random() * 2);
+  for (let i = 0; i < riverLength; i++) {
+    if (rx >= 0 && rx < width && rz >= 0 && rz < depth) {
+      if (draft[rx][rz].terrain !== 'water' && draft[rx][rz].terrain !== 'mountains') {
+        draft[rx][rz].terrain = 'river';
+      }
+    }
+    const step = Math.random();
+    if (step < 0.4) rx = Math.max(1, Math.min(width - 2, rx + (Math.random() < 0.5 ? 1 : -1)));
+    else rz = Math.min(depth - 2, rz + 1);
+  }
+
+  // Place 1 existing hydro dam on river (depleted by drought, demonstrates vulnerability)
+  const riverTiles: { x: number; z: number }[] = [];
+  for (let x = 0; x < width; x++) {
+    for (let z = 0; z < depth; z++) {
+      if (draft[x][z].terrain === 'river') riverTiles.push({ x, z });
+    }
+  }
+  if (riverTiles.length > 0) {
+    const pick = riverTiles[Math.floor(Math.random() * riverTiles.length)];
+    draft[pick.x][pick.z].building = 'hydro_dam';
+  }
+
+  // 4. Arid Tectonic Foothills / Highlands
+  const hillCount = 5 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < hillCount; i++) {
+    const hx = Math.floor(Math.random() * width);
+    const hz = Math.floor(Math.random() * depth);
+    if (draft[hx][hz].terrain === 'plains') {
+      draft[hx][hz].terrain = 'hills';
+    }
+  }
+
+  // 5. Sweltering Basin Metropolis: 2 city center tiles
+  placeCityCenter(draft, width, depth, 2);
+
+  // 6. Objective: 5 emergency fossil units to decommission (3 gas peakers + 2 coal plants)
+  placeStructures(draft, width, depth, 'gas_peaker', 3, ['plains', 'hills']);
+  placeStructures(draft, width, depth, 'coal_plant', 2, ['plains']);
+
+  // 7. Substation in the basin
+  placeStructures(draft, width, depth, 'substation', 1, ['plains']);
 }
 
 /**

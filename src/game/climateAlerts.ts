@@ -193,6 +193,26 @@ export const CLIMATE_ALERT_TEMPLATES: Record<ClimateAlertType, ClimateAlertTempl
     iconName: 'Activity',
     color: '#f43f5e',
   },
+  el_nino: {
+    type: 'el_nino',
+    title: 'El Niño-Southern Oscillation (Severe Watershed Drought)',
+    shortName: 'El Niño Crisis',
+    severity: 'emergency',
+    description: 'An intense Pacific El Niño warm anomaly triggers severe prolonged hydrological drought, critical reservoir depletion, and soaring ambient heat.',
+    scienceNote: 'Precipitation deficits slash hydroelectric dam reservoir capacity by -80%, while extreme sustained heatwaves drive massive regional air conditioning demand (+45%).',
+    mitigationAdvice: 'Conserve dwindling hydro reserves. Maximize daytime solar output, deploy deep geothermal baseload, and pre-charge battery BESS banks for the evening peak.',
+    effects: {
+      hydroMultiplier: 0.20,
+      demandMultiplier: 1.45,
+      solarMultiplier: 1.10,
+      windMultiplier: 0.80,
+      stabilityImpact: -15,
+    },
+    durationHours: 48,
+    warningLeadHours: 12,
+    iconName: 'Sun',
+    color: '#ea580c',
+  },
 };
 
 /**
