@@ -97,6 +97,7 @@ export default function App() {
   const [isTitleWindowOpen, setIsTitleWindowOpen] = useState<boolean>(true);
   const [isObjectivesOpen, setIsObjectivesOpen] = useState<boolean>(true);
   const [events, setEvents] = useState<GameEvent[]>([]);
+  const [hudHeight, setHudHeight] = useState<number>(86);
 
   // Automatic Device Type & Viewport Resizing
   const deviceInfo = useDeviceType();
@@ -923,6 +924,31 @@ export default function App() {
     const tech = techs.find((t) => t.id === techId);
     if (!tech || tech.unlocked || fundsRef.current < tech.cost) return;
 
+    // Check prerequisites
+    if (tech.prerequisites && tech.prerequisites.length > 0) {
+      const missing = tech.prerequisites.filter((reqId) => {
+        const reqTech = techs.find((t) => t.id === reqId);
+        return !reqTech || !reqTech.unlocked;
+      });
+      if (missing.length > 0) {
+        sound.playCannotDeploy();
+        const missingNames = missing
+          .map((id) => techs.find((t) => t.id === id)?.name || id)
+          .join(', ');
+        setEvents((prev) => [
+          ...prev,
+          {
+            id: `req_fail_${Date.now()}`,
+            title: 'Prerequisite Required',
+            description: `Must research ${missingNames} before unlocking ${tech.name}.`,
+            type: 'warning',
+            timestamp: Date.now(),
+          },
+        ]);
+        return;
+      }
+    }
+
     sound.playUpgrade();
     spendFunds(tech.cost, `Technology upgrade deployment (${tech.name}) exhausted municipal reserves.`);
     setTechs((prev) =>
@@ -957,6 +983,7 @@ export default function App() {
       className={`relative w-screen h-screen overflow-hidden bg-[#070b12] text-slate-100 font-sans ${
         deviceInfo.effectiveScale === 'compact' ? 'text-xs' : ''
       }`}
+      style={{ ['--hud-height' as string]: `${hudHeight}px` }}
       data-device-type={deviceInfo.deviceType}
       data-ui-scale={deviceInfo.effectiveScale}
     >
@@ -1017,6 +1044,7 @@ export default function App() {
         onToggleObjectives={handleToggleObjectives}
         isClockStartedForScenario={isClockStartedForScenario}
         deviceInfo={deviceInfo}
+        onHeightChange={setHudHeight}
       />
 
       {/* 3. Red Alert Right Construction Sidebar */}
@@ -1031,6 +1059,7 @@ export default function App() {
         onSetToolMode={setToolMode}
         totalGenerationMW={totalCleanMW + totalFossilMW}
         totalDemandMW={totalDemandMW}
+        topOffset={hudHeight}
       />
 
       {/* 4. Left Tile Inspector */}
@@ -1043,6 +1072,7 @@ export default function App() {
           onDecommission={handleDecommissionTile}
           onDemolish={handleDemolishTile}
           onQuickBuild={handleQuickBuild}
+          topOffset={hudHeight}
         />
       )}
 

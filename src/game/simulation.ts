@@ -170,6 +170,8 @@ export function stepSimulation(
   let demandMultiplier = 1.0;
   let carbonCreditMultiplier = 1.0;
   let hydroMultiplier = 1.0;
+  let geothermalMultiplier = 1.0;
+  let stabilityBonus = 0;
 
   unlockedTechs.forEach((t) => {
     if (t.bonus.solarMultiplier) solarMultiplier *= t.bonus.solarMultiplier;
@@ -177,6 +179,9 @@ export function stepSimulation(
     if (t.bonus.batteryMultiplier) batteryMultiplier *= t.bonus.batteryMultiplier;
     if (t.bonus.demandReductionPct) demandMultiplier *= (1 - t.bonus.demandReductionPct);
     if (t.bonus.carbonCreditRateMultiplier) carbonCreditMultiplier *= t.bonus.carbonCreditRateMultiplier;
+    if (t.bonus.geothermalMultiplier) geothermalMultiplier *= t.bonus.geothermalMultiplier;
+    if (t.bonus.hydroMultiplier) hydroMultiplier *= t.bonus.hydroMultiplier;
+    if (t.bonus.stabilityBonusPct) stabilityBonus += t.bonus.stabilityBonusPct;
   });
 
   // Apply Active Climate Alert Modifiers
@@ -286,7 +291,7 @@ export function stepSimulation(
         outputMW = def.basePowerMW * (tile.level === 2 ? 1.3 : 1.0) * hydroMultiplier;
       } else if (tile.building === 'geothermal') {
         // Weather-independent baseload
-        outputMW = def.basePowerMW * (tile.level === 2 ? 1.35 : 1.0);
+        outputMW = def.basePowerMW * (tile.level === 2 ? 1.35 : 1.0) * geothermalMultiplier;
       }
       totalCleanMW += outputMW;
     } else if (tile.building === 'battery_bess') {
@@ -359,7 +364,7 @@ export function stepSimulation(
   // Grid Stability: 100% when supply meets or exceeds demand, factoring in alert turbulence
   const supplyDeficitMW = totalDemandMW - effectiveTotalGeneration;
   const hasBlackout = supplyDeficitMW > 30; // 30MW threshold
-  let rawStabilityPct = Math.round((effectiveTotalGeneration / Math.max(1, totalDemandMW)) * 100);
+  let rawStabilityPct = Math.round((effectiveTotalGeneration / Math.max(1, totalDemandMW)) * 100) + stabilityBonus;
   if (activeAlert?.effects.stabilityImpact) {
     rawStabilityPct += activeAlert.effects.stabilityImpact;
   }

@@ -22,6 +22,7 @@ interface TileInspectorProps {
   onDecommission: (tile: GridTile) => void;
   onDemolish: (tile: GridTile) => void;
   onQuickBuild: (tile: GridTile, buildingType: any) => void;
+  topOffset?: number;
 }
 
 export const TileInspector: React.FC<TileInspectorProps> = ({
@@ -32,6 +33,7 @@ export const TileInspector: React.FC<TileInspectorProps> = ({
   onDecommission,
   onDemolish,
   onQuickBuild,
+  topOffset = 86,
 }) => {
   if (!tile) return null;
 
@@ -46,7 +48,12 @@ export const TileInspector: React.FC<TileInspectorProps> = ({
   const canAffordUpgrade = funds >= upgradeCost;
 
   return (
-    <div className="fixed sm:absolute bottom-0 sm:bottom-auto sm:top-28 left-0 right-0 sm:right-auto sm:left-4 z-30 w-full sm:w-84 bg-slate-950/95 backdrop-blur-md rounded-t-2xl sm:rounded-xl border-t sm:border border-slate-800 shadow-2xl p-4 text-slate-200 pointer-events-auto select-none max-h-[60vh] sm:max-h-[calc(100vh-8.5rem)] overflow-y-auto">
+    <div
+      style={{
+        top: typeof window !== 'undefined' && window.innerWidth >= 640 ? `${topOffset + 12}px` : undefined,
+      }}
+      className="fixed sm:absolute bottom-0 sm:bottom-auto left-0 right-0 sm:right-auto sm:left-4 z-30 w-full sm:w-84 bg-slate-950/95 backdrop-blur-md rounded-t-2xl sm:rounded-xl border-t sm:border border-slate-800 shadow-2xl p-4 text-slate-200 pointer-events-auto select-none max-h-[60vh] sm:max-h-[calc(100vh-8.5rem)] overflow-y-auto"
+    >
       {/* Mobile drag handle indicator */}
       <div className="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-2 sm:hidden" />
       <div className="flex items-center justify-between border-b border-slate-800 pb-2.5 mb-3">

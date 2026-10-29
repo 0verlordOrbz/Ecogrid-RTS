@@ -32,6 +32,7 @@ interface RedAlertSidebarProps {
   onSetToolMode: (mode: SidebarToolMode) => void;
   totalGenerationMW: number;
   totalDemandMW: number;
+  topOffset?: number;
 }
 
 interface SidebarBuildOption {
@@ -53,6 +54,7 @@ export const RedAlertSidebar: React.FC<RedAlertSidebarProps> = ({
   onSetToolMode,
   totalGenerationMW,
   totalDemandMW,
+  topOffset = 86,
 }) => {
   const [activeCategory, setActiveCategory] = useState<'generation' | 'storage' | 'eco'>('generation');
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -204,7 +206,8 @@ export const RedAlertSidebar: React.FC<RedAlertSidebarProps> = ({
             sound.playClick();
             setIsMobileOpen(true);
           }}
-          className="lg:hidden absolute right-0 top-28 sm:top-32 z-30 bg-slate-900/95 border-l border-y border-emerald-500/50 rounded-l-xl px-2.5 py-3 sm:py-3.5 flex flex-col items-center gap-1.5 shadow-2xl text-emerald-400 pointer-events-auto hover:bg-slate-800 transition-transform active:scale-95 cursor-pointer"
+          style={{ top: `${topOffset + 14}px` }}
+          className="lg:hidden absolute right-0 z-30 bg-slate-900/95 border-l border-y border-emerald-500/50 rounded-l-xl px-2.5 py-3 sm:py-3.5 flex flex-col items-center gap-1.5 shadow-2xl text-emerald-400 pointer-events-auto hover:bg-slate-800 transition-transform active:scale-95 cursor-pointer"
           title="Open Construction & Power Panel"
         >
           <Zap className="w-4 h-4 animate-pulse" />
@@ -216,7 +219,12 @@ export const RedAlertSidebar: React.FC<RedAlertSidebarProps> = ({
       )}
 
       <aside
-        className={`absolute right-0 top-14 bottom-0 z-30 w-72 max-w-[85vw] bg-slate-950/98 backdrop-blur-md border-l border-slate-800/90 flex shadow-2xl pointer-events-auto select-none transition-transform duration-300 ${
+        style={{
+          top: isMobileOpen ? 0 : `${topOffset}px`,
+        }}
+        className={`absolute right-0 bottom-0 ${
+          isMobileOpen ? 'z-50' : 'z-30'
+        } w-72 max-w-[85vw] bg-slate-950/98 backdrop-blur-md border-l border-slate-800/90 flex shadow-2xl pointer-events-auto select-none transition-transform duration-300 ${
           isMobileOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'
         }`}
       >

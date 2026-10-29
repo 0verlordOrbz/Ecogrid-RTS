@@ -71,6 +71,7 @@ interface GameHUDProps {
   onToggleObjectives?: (open: boolean) => void;
   isClockStartedForScenario?: boolean;
   deviceInfo?: DeviceInfo;
+  onHeightChange?: (height: number) => void;
 }
 
 export const GameHUD: React.FC<GameHUDProps> = ({
@@ -105,11 +106,44 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   onToggleObjectives,
   isClockStartedForScenario = false,
   deviceInfo,
+  onHeightChange,
 }) => {
   const [soundEnabled, setSoundEnabled] = useState(sound.enabled);
   const [internalDirectivesOpen, setInternalDirectivesOpen] = useState(false);
   const [showScaleMenu, setShowScaleMenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const telemetryBarRef = React.useRef<HTMLDivElement>(null);
+  const headerRef = React.useRef<HTMLElement>(null);
+
+  React.useEffect(() => {
+    const measure = () => {
+      if (telemetryBarRef.current) {
+        const bottom = Math.round(telemetryBarRef.current.getBoundingClientRect().bottom);
+        if (bottom > 0) {
+          onHeightChange?.(bottom);
+        }
+      } else if (headerRef.current) {
+        const bottom = Math.round(headerRef.current.getBoundingClientRect().bottom);
+        if (bottom > 0) {
+          onHeightChange?.(bottom);
+        }
+      }
+    };
+
+    measure();
+
+    if (typeof ResizeObserver !== 'undefined' && telemetryBarRef.current) {
+      const observer = new ResizeObserver(() => {
+        measure();
+      });
+      observer.observe(telemetryBarRef.current);
+      if (headerRef.current) observer.observe(headerRef.current);
+      return () => observer.disconnect();
+    }
+
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [onHeightChange]);
 
   const isDirectivesOpen = isObjectivesOpen !== undefined ? isObjectivesOpen : internalDirectivesOpen;
 
@@ -136,7 +170,7 @@ export const GameHUD: React.FC<GameHUDProps> = ({
   const upcomingAlert = weather.upcomingAlert;
 
   return (
-    <header className="absolute top-0 left-0 right-0 z-40 flex flex-col pointer-events-none select-none">
+    <header ref={headerRef} className="absolute top-0 left-0 right-0 z-40 flex flex-col pointer-events-none select-none">
       {/* 1. Primary Header Bar */}
       <div className="w-full bg-slate-950/90 backdrop-blur-md border-b border-slate-800/80 px-2.5 sm:px-4 py-2 flex items-center justify-between gap-2 sm:gap-4 pointer-events-auto">
         {/* Left: Brand & Mobile Menu Button */}
@@ -742,7 +776,10 @@ export const GameHUD: React.FC<GameHUDProps> = ({
       )}
 
       {/* 4. Telemetry & Primary Grid Metrics Strip (Responsive) */}
-      <div className="w-full bg-slate-900/85 backdrop-blur-md border-b border-slate-800/70 px-3 sm:px-4 py-1.5 pr-3 lg:pr-76 flex flex-wrap items-center justify-between gap-y-1.5 gap-x-4 text-xs text-slate-300 pointer-events-auto">
+      <div
+        ref={telemetryBarRef}
+        className="w-full bg-slate-900/85 backdrop-blur-md border-b border-slate-800/70 px-3 sm:px-4 py-1.5 flex flex-wrap items-center justify-between gap-y-1.5 gap-x-4 text-xs text-slate-300 pointer-events-auto"
+      >
         {/* Left Block: Power Generation, Clean %, Stability */}
         <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-6 gap-y-1">
           {/* Generation vs Demand */}

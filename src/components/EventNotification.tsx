@@ -193,7 +193,10 @@ export const EventNotification: React.FC<EventNotificationProps> = ({
           to { width: 0%; }
         }
       `}</style>
-      <div className="absolute top-20 right-3 sm:right-5 md:right-76 z-30 flex flex-col gap-2 max-w-sm sm:max-w-md w-full pointer-events-auto select-none">
+      <div
+        style={{ top: 'calc(var(--hud-height, 86px) + 12px)' }}
+        className="absolute right-3 sm:right-5 md:right-76 z-30 flex flex-col gap-2 max-w-sm sm:max-w-md w-full pointer-events-auto select-none"
+      >
         {events.slice(-4).map((event) => (
           <SingleNotification key={event.id} event={event} onDismiss={onDismiss} />
         ))}

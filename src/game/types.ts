@@ -68,11 +68,23 @@ export interface WeatherState {
   upcomingAlert?: ClimateAlert | null;
 }
 
+export type TechCategory =
+  | 'efficiency'
+  | 'storage'
+  | 'grid'
+  | 'policy'
+  | 'power_systems'
+  | 'resource_management'
+  | 'infrastructure'
+  | 'defense_systems'
+  | 'advanced_tech'
+  | 'special_projects';
+
 export interface TechUpgrade {
   id: string;
   name: string;
   cost: number;
-  category: 'efficiency' | 'storage' | 'grid' | 'policy';
+  category: TechCategory | string;
   description: string;
   effectDescription: string;
   unlocked: boolean;
@@ -82,7 +94,21 @@ export interface TechUpgrade {
     batteryMultiplier?: number;
     carbonCreditRateMultiplier?: number;
     demandReductionPct?: number;
+    geothermalMultiplier?: number;
+    hydroMultiplier?: number;
+    stabilityBonusPct?: number;
   };
+  // Red Alert RTS Tech Tree Additions
+  tier?: number;
+  prerequisites?: string[];
+  researchDurationSeconds?: number;
+  researchProgressPct?: number;
+  isResearching?: boolean;
+  iconName?: string;
+  tacticalCode?: string;
+  classifiedLevel?: 'Confidential' | 'Secret' | 'Top Secret' | 'Black Ops';
+  quote?: string;
+  gridCoordinates?: { col: number; row: number };
 }
 
 export type ObjectiveType =
